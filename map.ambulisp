@@ -1,0 +1,19 @@
+
+(define nil (quote ()))
+
+(define map)
+(set map
+  (lambda (f list)
+    (if (null list)
+        nil
+        (cons
+          (f (car list))
+          (map f (cdr list))))))
+
+(println
+  (map (lambda (x) (cons x x))
+       (cons (quote a)
+         (cons (quote b)
+           (cons (quote c)
+                 nil)))))
+

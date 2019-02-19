@@ -1,0 +1,1055 @@
+
+data:
+
+  const.TAB          is text
+  const.CR           is text
+  const.LF           is text
+  const.upperA       is number
+  const.upperZ       is number
+  const.lowerA       is number
+  const.lowerZ       is number
+  const.0            is number
+  const.9            is number
+  const.atom-tag     is number
+  const.nil          is number
+  const.terminator   is number
+  const.first-cell   is number
+  const.first-atom   is number
+
+  global.cars        is number vector
+  global.cdrs        is number vector
+  global.nextcell    is number
+  global.atoms       is text vector
+  global.nextatom    is number
+
+  cons.car           is number
+  cons.cdr           is number
+  cons.cell          is number
+
+  car.cell           is number
+  car.car            is number
+
+  set-car.cell       is number
+  set-car.car        is number
+
+  cdr.cell           is number
+  cdr.cdr            is number
+
+  set-cdr.cell       is number
+  set-cdr.cdr        is number
+
+  intern.text        is text
+  intern.cell        is number
+
+  is-alnum.chr       is text
+  is-alnum.ord       is number
+  is-alnum.result    is number
+
+  reader.input       is text
+  reader.n           is number
+  reader.i           is number
+  reader.c           is text
+  reader.buf         is text
+  reader.stack       is number vector
+  reader.stack.size  is number
+  reader.cell        is number
+
+  writer.input       is number
+  writer.stack       is number vector
+  writer.stack.top   is number
+  writer.fst         is number vector
+
+  symtable.quote     is number
+  symtable.begin     is number
+  symtable.define    is number
+  symtable.set       is number
+  symtable.if        is number
+  symtable.lambda    is number
+  symtable.closure   is number
+  symtable.cons      is number
+  symtable.car       is number
+  symtable.cdr       is number
+  symtable.print     is number
+  symtable.println   is number
+  symtable.null      is number
+  symtable.eq        is number
+  symtable.t         is number
+
+  eval.input         is number
+  eval.output        is number
+  eval.stack         is number vector
+  eval.stack.top     is number
+  eval.env           is number
+  eval.env.key       is number
+  eval.env.value     is number
+  eval.env.ptr       is number
+  eval.ptr           is number
+  eval.tmp           is number
+  eval.tmp1          is number
+  eval.tmp2          is number
+  eval.callstack     is number vector
+  eval.callstack.top is number
+  eval.result        is number
+
+  apply.function     is number
+  apply.args         is number
+  apply.params       is number
+  apply.body         is number
+  apply.env          is number
+  apply.env.key      is number
+  apply.env.value    is number
+
+procedure:
+
+#### Constants ####
+
+  store character 10 in const.LF
+  store character 13 in const.CR
+  store character  9 in const.TAB
+  store   65         in const.upperA
+  store   90         in const.upperZ
+  store   97         in const.lowerA
+  store  122         in const.lowerZ
+  store   48         in const.0
+  store   57         in const.9
+  store   -1         in const.atom-tag
+  store    0         in const.nil
+  store   -1         in const.terminator
+  store  100         in const.first-cell
+  store -100         in const.first-atom
+
+#### Memory management ####
+
+  sub-procedure global.initialize
+    store const.first-cell in global.nextcell
+    store const.first-atom in global.nextatom
+  end sub-procedure
+
+  # cons : cons.car, cons.cdr -> cons.cell
+  sub-procedure cons
+    store global.nextcell in cons.cell
+    add global.nextcell and 1 in global.nextcell
+    store cons.car in global.cars:cons.cell
+    store cons.cdr in global.cdrs:cons.cell
+  end sub-procedure
+
+  # car : car.cell -> car.car
+  sub-procedure car
+    store global.cars:car.cell in car.car
+  end sub-procedure
+
+  # set-car : set-car.cell , set-car.car ->
+  sub-procedure set-car
+    store set-car.car in global.cars:set-car.cell
+  end sub-procedure
+
+  # cdr : cdr.cell -> cdr.cdr
+  sub-procedure cdr
+    store global.cdrs:cdr.cell in cdr.cdr
+  end sub-procedure
+
+  # set-cdr : set-cdr.cell , set-cdr.cdr ->
+  sub-procedure set-cdr
+    store set-cdr.cdr in global.cdrs:set-cdr.cell
+  end sub-procedure
+
+  # intern : intern.text -> intern.cell
+  sub-procedure intern
+    store const.first-atom in intern.cell
+    while intern.cell is greater than global.nextatom do
+      if global.atoms:intern.cell is equal to intern.text then
+        return
+      end-if
+      subtract 1 from intern.cell in intern.cell
+    repeat
+    store intern.text in global.atoms:intern.cell
+    subtract 1 from global.nextatom in global.nextatom
+  end sub-procedure
+
+  sub-procedure is-alnum.is-upper
+    if const.upperA is less than or equal to is-alnum.ord then
+      if const.upperZ is greater than or equal to is-alnum.ord then
+        store 1 in is-alnum.result
+      end-if
+    end-if
+  end sub-procedure
+
+  sub-procedure is-alnum.is-lower
+    # a..z
+    if const.lowerA is less than or equal to is-alnum.ord then
+      if const.lowerZ is greater than or equal to is-alnum.ord then
+        store 1 in is-alnum.result
+      end-if
+    end-if
+  end sub-procedure
+
+  sub-procedure is-alnum.is-digit
+    # 0..9
+    if const.0 is less than or equal to is-alnum.ord then
+      if const.9 is greater than or equal to is-alnum.ord then
+        store 1 in is-alnum.result
+      end-if
+    end-if
+  end sub-procedure
+
+  # is-alnum : is-alnum.chr -> is-alnum.result
+  sub-procedure is-alnum
+    store 0 in is-alnum.result
+    store character code of is-alnum.chr in is-alnum.ord
+    call sub-procedure is-alnum.is-upper
+    call sub-procedure is-alnum.is-lower
+    call sub-procedure is-alnum.is-digit
+  end sub-procedure
+
+#### Reader ####
+
+  sub-procedure reader.initialize
+    store length of reader.input in reader.n
+    store 0 in reader.i
+    store 0 in reader.stack.size
+  end sub-procedure
+
+  sub-procedure reader.ignore-whitespace
+    while reader.i is less than reader.n do
+      get character at reader.i from reader.input in reader.c
+      if reader.c is equal to " " then
+        add reader.i and 1 in reader.i
+        continue
+      end-if
+      if reader.c is equal to const.TAB then
+        add reader.i and 1 in reader.i
+        continue
+      end-if
+      if reader.c is equal to const.CR then
+        add reader.i and 1 in reader.i
+        continue
+      end-if
+      if reader.c is equal to const.LF then
+        add reader.i and 1 in reader.i
+        continue
+      end-if
+      break
+    repeat
+  end sub-procedure
+
+  sub-procedure reader.check-eof
+    if reader.i is greater than or equal to reader.n then
+      display "ambulisp -- parse error" crlf
+      exit
+    end-if
+  end sub-procedure
+
+  sub-procedure reader.seek
+    call sub-procedure reader.ignore-whitespace
+    call sub-procedure reader.check-eof
+    get character at reader.i from reader.input in reader.c
+  end sub-procedure
+
+  sub-procedure reader.push-cell
+    store reader.cell in reader.stack:reader.stack.size
+    add reader.stack.size and 1 in reader.stack.size
+  end sub-procedure
+
+  sub-procedure reader.push-terminator
+    store const.terminator in reader.stack:reader.stack.size
+    add reader.stack.size and 1 in reader.stack.size
+  end sub-procedure
+
+  sub-procedure reader.read-atom
+    store "" in reader.buf
+    while reader.i is less than reader.n do
+      get character at reader.i from reader.input in reader.c
+      store reader.c in is-alnum.chr
+      call sub-procedure is-alnum
+      if is-alnum.result is equal to 0 then
+        break
+      end-if
+      join reader.buf and reader.c in reader.buf
+      add reader.i and 1 in reader.i
+    repeat
+
+    store reader.buf in intern.text
+    call sub-procedure intern
+    store intern.cell in reader.cell
+    call sub-procedure reader.push-cell
+  end sub-procedure
+
+  sub-procedure reader.build-list
+    store const.nil in reader.cell
+    subtract 1 from reader.stack.size in reader.stack.size
+    while reader.stack:reader.stack.size is not equal to const.terminator do
+      store reader.stack:reader.stack.size in cons.car
+      store reader.cell in cons.cdr
+      call sub-procedure cons
+      store cons.cell in reader.cell
+      subtract 1 from reader.stack.size in reader.stack.size
+    repeat
+    call sub-procedure reader.push-cell
+  end sub-procedure
+
+  sub-procedure reader.read-expression
+    call sub-procedure reader.seek
+    if reader.c is equal to "(" then
+      add reader.i and 1 in reader.i
+      call sub-procedure reader.push-terminator
+      call sub-procedure reader.seek
+      while reader.c is not equal to ")" do
+        call sub-procedure reader.read-expression
+        call sub-procedure reader.seek
+      repeat
+      add reader.i and 1 in reader.i
+      call sub-procedure reader.build-list
+    else
+      call sub-procedure reader.read-atom
+    end-if
+  end sub-procedure
+
+  # reader.read : reader.input -> reader.cell
+  sub-procedure reader.read
+    call sub-procedure reader.initialize
+    call sub-procedure reader.read-expression
+    if reader.stack.size is not equal to 1 then
+      display "ambulisp -- parse error" crlf
+      exit
+    end-if
+    store reader.stack:0 in reader.cell
+  end sub-procedure
+
+#### Writer ####
+
+  sub-procedure writer.write-atom
+    display global.atoms:writer.stack:writer.stack.top
+  end sub-procedure
+
+  sub-procedure writer.write-expression
+    if writer.stack:writer.stack.top is greater than or equal to 0 then
+      display "("
+      store 0 in writer.fst:writer.stack.top
+      while writer.stack:writer.stack.top is greater than 0 do
+        if writer.fst:writer.stack.top is equal to 0 then
+          store 1 in writer.fst:writer.stack.top 
+        else
+          display " "
+        end-if
+        # head
+        store writer.stack:writer.stack.top in car.cell
+        call sub-procedure car
+        add writer.stack.top and 1 in writer.stack.top
+        store car.car in writer.stack:writer.stack.top
+        call sub-procedure writer.write-expression
+        subtract 1 from writer.stack.top in writer.stack.top
+        # tail
+        store writer.stack:writer.stack.top in cdr.cell
+        call sub-procedure cdr
+        store cdr.cdr in writer.stack:writer.stack.top
+      repeat
+      if writer.stack:writer.stack.top is less than 0 then
+        if writer.fst:writer.stack.top is not equal to 0 then
+          display " "
+        end-if
+        display ". "
+        call sub-procedure writer.write-atom
+      end-if
+      display ")"
+    else
+      call sub-procedure writer.write-atom
+    end-if
+  end sub-procedure
+
+  # writer.write : writer.input ->
+  sub-procedure writer.write
+    store 0 in writer.stack.top
+    store writer.input in writer.stack:writer.stack.top
+    call sub-procedure writer.write-expression
+  end sub-procedure
+
+  # writer.writeln : writer.input ->
+  sub-procedure writer.writeln
+    call sub-procedure writer.write
+    display "" crlf
+  end sub-procedure
+
+#### Symbol table ####
+
+  sub-procedure symtable.initialize
+    store "quote" in intern.text
+    call sub-procedure intern
+    store intern.cell in symtable.quote
+
+    store "begin" in intern.text
+    call sub-procedure intern
+    store intern.cell in symtable.begin
+
+    store "define" in intern.text
+    call sub-procedure intern
+    store intern.cell in symtable.define
+
+    store "set" in intern.text
+    call sub-procedure intern
+    store intern.cell in symtable.set
+
+    store "if" in intern.text
+    call sub-procedure intern
+    store intern.cell in symtable.if
+
+    store "lambda" in intern.text
+    call sub-procedure intern
+    store intern.cell in symtable.lambda
+
+    store "closure" in intern.text
+    call sub-procedure intern
+    store intern.cell in symtable.closure
+
+    store "cons" in intern.text
+    call sub-procedure intern
+    store intern.cell in symtable.cons
+
+    store "car" in intern.text
+    call sub-procedure intern
+    store intern.cell in symtable.car
+
+    store "cdr" in intern.text
+    call sub-procedure intern
+    store intern.cell in symtable.cdr
+
+    store "print" in intern.text
+    call sub-procedure intern
+    store intern.cell in symtable.print
+
+    store "println" in intern.text
+    call sub-procedure intern
+    store intern.cell in symtable.println
+
+    store "null" in intern.text
+    call sub-procedure intern
+    store intern.cell in symtable.null
+
+    store "eq" in intern.text
+    call sub-procedure intern
+    store intern.cell in symtable.eq
+
+    store "t" in intern.text
+    call sub-procedure intern
+    store intern.cell in symtable.t
+
+  end sub-procedure
+
+#### Evaluator ####
+
+  sub-procedure eval.car
+    store eval.stack:eval.stack.top in car.cell
+    call sub-procedure car
+  end sub-procedure
+
+  sub-procedure eval.take-car
+    store eval.stack:eval.stack.top in car.cell
+    call sub-procedure car
+    store car.car in eval.stack:eval.stack.top
+  end sub-procedure
+
+  sub-procedure eval.take-cdr
+    store eval.stack:eval.stack.top in cdr.cell
+    call sub-procedure cdr
+    store cdr.cdr in eval.stack:eval.stack.top
+  end sub-procedure
+
+  sub-procedure eval.push-car
+    store eval.stack:eval.stack.top in car.cell
+    call sub-procedure car
+    add eval.stack.top and 1 in eval.stack.top 
+    store car.car in eval.stack:eval.stack.top
+  end sub-procedure
+
+  sub-procedure eval.take-first-arg
+    store eval.stack:eval.stack.top in cdr.cell
+    call sub-procedure cdr
+    store cdr.cdr in car.cell
+    call sub-procedure car
+    store car.car in eval.stack:eval.stack.top
+  end sub-procedure
+
+  sub-procedure eval.push-first-arg
+    store eval.stack:eval.stack.top in cdr.cell
+    call sub-procedure cdr
+    store cdr.cdr in car.cell
+    call sub-procedure car
+    add eval.stack.top and 1 in eval.stack.top 
+    store car.car in eval.stack:eval.stack.top
+  end sub-procedure
+
+  sub-procedure eval.push-second-arg
+    store eval.stack:eval.stack.top in cdr.cell
+    call sub-procedure cdr
+    store cdr.cdr in cdr.cell
+    call sub-procedure cdr
+    store cdr.cdr in car.cell
+    call sub-procedure car
+    add eval.stack.top and 1 in eval.stack.top 
+    store car.car in eval.stack:eval.stack.top
+  end sub-procedure
+
+  sub-procedure eval.shift-down
+    add eval.stack.top and 1 in eval.tmp
+    store eval.stack:eval.tmp in eval.stack:eval.stack.top 
+  end sub-procedure
+
+  sub-procedure eval.push-nil
+    add eval.stack.top and 1 in eval.stack.top 
+    store const.nil in eval.stack:eval.stack.top
+  end sub-procedure
+
+  sub-procedure eval.pop
+    subtract 1 from eval.stack.top in eval.stack.top 
+  end sub-procedure
+
+  # eval.env.define : eval.env.key , eval.env.value ->
+  sub-procedure eval.env.define
+    store eval.env.key in cons.car
+    store eval.env.value in cons.cdr
+    call sub-procedure cons
+    #
+    store cons.cell in cons.car
+    store eval.env in cons.cdr
+    call sub-procedure cons
+    #
+    store cons.cell in eval.env
+  end sub-procedure
+
+  # eval.env.lookup : eval.env.key -> eval.env.value
+  sub-procedure eval.env.lookup
+    store eval.env in eval.env.ptr
+    while eval.env.ptr is greater than 0 do
+      store eval.env.ptr in car.cell
+      call sub-procedure car
+      store car.car in car.cell
+      call sub-procedure car
+      if car.car is equal to eval.env.key then
+        store eval.env.ptr in car.cell
+        call sub-procedure car
+        store car.car in cdr.cell
+        call sub-procedure cdr
+        store cdr.cdr in eval.env.value
+        return
+      end-if
+      store eval.env.ptr in cdr.cell
+      call sub-procedure cdr
+      store cdr.cdr in eval.env.ptr
+    repeat
+    display "ambulisp -- unbound variable: "
+    store eval.env.key in writer.input
+    call sub-procedure writer.writeln
+    exit
+  end sub-procedure
+
+  # eval.env.overwrite : eval.env.key , eval.env.value ->
+  sub-procedure eval.env.overwrite
+    store eval.env in eval.env.ptr
+    while eval.env.ptr is greater than 0 do
+      store eval.env.ptr in car.cell
+      call sub-procedure car
+      store car.car in car.cell
+      call sub-procedure car
+      if car.car is equal to eval.env.key then
+        store eval.env.ptr in car.cell
+        call sub-procedure car
+        store car.car in set-cdr.cell
+        store eval.env.value in set-cdr.cdr
+        call sub-procedure set-cdr
+        return
+      end-if
+      store eval.env.ptr in cdr.cell
+      call sub-procedure cdr
+      store cdr.cdr in eval.env.ptr
+    repeat
+    display "ambulisp -- unbound variable: "
+    store eval.env.key in writer.input
+    call sub-procedure writer.writeln
+    exit
+  end sub-procedure
+
+  sub-procedure eval.env.initialize
+    store const.nil in eval.env
+
+    store symtable.cons in eval.env.key
+    store symtable.cons in cons.car
+    store const.nil in cons.cdr
+    call sub-procedure cons
+    store cons.cell in eval.env.value
+    call sub-procedure eval.env.define
+
+    store symtable.car in eval.env.key
+    store symtable.car in cons.car
+    store const.nil in cons.cdr
+    call sub-procedure cons
+    store cons.cell in eval.env.value
+    call sub-procedure eval.env.define
+
+    store symtable.cdr in eval.env.key
+    store symtable.cdr in cons.car
+    store const.nil in cons.cdr
+    call sub-procedure cons
+    store cons.cell in eval.env.value
+    call sub-procedure eval.env.define
+
+    store symtable.print in eval.env.key
+    store symtable.print in cons.car
+    store const.nil in cons.cdr
+    call sub-procedure cons
+    store cons.cell in eval.env.value
+    call sub-procedure eval.env.define
+
+    store symtable.println in eval.env.key
+    store symtable.println in cons.car
+    store const.nil in cons.cdr
+    call sub-procedure cons
+    store cons.cell in eval.env.value
+    call sub-procedure eval.env.define
+
+    store symtable.null in eval.env.key
+    store symtable.null in cons.car
+    store const.nil in cons.cdr
+    call sub-procedure cons
+    store cons.cell in eval.env.value
+    call sub-procedure eval.env.define
+
+    store symtable.eq in eval.env.key
+    store symtable.eq in cons.car
+    store const.nil in cons.cdr
+    call sub-procedure cons
+    store cons.cell in eval.env.value
+    call sub-procedure eval.env.define
+
+  end sub-procedure
+
+  sub-procedure eval.define
+    store eval.stack:eval.stack.top in eval.env.value
+    call sub-procedure eval.pop
+    call sub-procedure eval.take-first-arg
+    store eval.stack:eval.stack.top in eval.env.key
+    call sub-procedure eval.pop
+    call sub-procedure eval.env.define
+    call sub-procedure eval.push-nil
+  end sub-procedure
+
+  sub-procedure eval.set
+    store eval.stack:eval.stack.top in eval.env.value
+    call sub-procedure eval.pop
+    call sub-procedure eval.take-first-arg
+    store eval.stack:eval.stack.top in eval.env.key
+    call sub-procedure eval.pop
+    call sub-procedure eval.env.overwrite
+    call sub-procedure eval.push-nil
+  end sub-procedure
+
+  sub-procedure eval.make-closure
+    store eval.stack:eval.stack.top in cons.car
+    store eval.env in cons.cdr
+    call sub-procedure cons
+    store symtable.closure in cons.car
+    store cons.cell in cons.cdr
+    call sub-procedure cons
+    store cons.cell in eval.stack:eval.stack.top
+  end sub-procedure
+
+  # a b --> b a
+  sub-procedure eval.swap
+    store eval.stack:eval.stack.top in eval.tmp1
+    subtract 1 from eval.stack.top in eval.stack.top
+    store eval.stack:eval.stack.top in eval.tmp2
+    store eval.tmp1 in eval.stack:eval.stack.top
+    add eval.stack.top and 1 in eval.stack.top
+    store eval.tmp2 in eval.stack:eval.stack.top
+  end sub-procedure
+
+  # a b c --> (c . a) b
+  sub-procedure eval.swap-cons
+    store eval.stack:eval.stack.top in cons.car
+    subtract 1 from eval.stack.top in eval.stack.top
+    store eval.stack:eval.stack.top in eval.tmp
+    subtract 1 from eval.stack.top in eval.stack.top
+    store eval.stack:eval.stack.top in cons.cdr
+    call sub-procedure cons
+    store cons.cell in eval.stack:eval.stack.top
+    add eval.stack.top and 1 in eval.stack.top
+    store eval.tmp in eval.stack:eval.stack.top
+  end sub-procedure
+
+  sub-procedure eval.reverse
+    store const.nil in eval.tmp
+    while eval.stack:eval.stack.top is greater than 0 do
+      store eval.stack:eval.stack.top in car.cell
+      call sub-procedure car
+      store car.car in cons.car
+      store eval.tmp in cons.cdr
+      call sub-procedure cons
+      store cons.cell in eval.tmp
+      call sub-procedure eval.take-cdr
+    repeat
+    store eval.tmp in eval.stack:eval.stack.top
+  end sub-procedure
+
+  sub-procedure apply.unpack-closure
+    store apply.function in cdr.cell
+    call sub-procedure cdr
+    store cdr.cdr in eval.tmp1       # ((lambda x . y) . z)
+    store eval.tmp1 in car.cell
+    call sub-procedure car
+    store car.car in eval.tmp2       # (lambda x . y)
+    store eval.tmp2 in cdr.cell
+    call sub-procedure cdr
+    store cdr.cdr in eval.tmp2       # (x . y)
+    store eval.tmp2 in car.cell
+    call sub-procedure car
+    store car.car in apply.params    # x
+    store eval.tmp2 in cdr.cell
+    call sub-procedure cdr
+    store cdr.cdr in eval.tmp2       # y
+    store symtable.begin in cons.car
+    store eval.tmp2 in cons.cdr
+    call sub-procedure cons
+    store cons.cell in apply.body    # (begin . y)
+    store eval.tmp1 in cdr.cell
+    call sub-procedure cdr
+    store cdr.cdr in apply.env       # z
+  end sub-procedure
+
+  sub-procedure apply.env.define
+    store apply.env.key in cons.car
+    store apply.env.value in cons.cdr
+    call sub-procedure cons
+    #
+    store cons.cell in cons.car
+    store apply.env in cons.cdr
+    call sub-procedure cons
+    #
+    store cons.cell in apply.env
+  end sub-procedure
+
+  sub-procedure apply.bind-parameters
+    while apply.params is greater than 0 do
+      if apply.args is less than or equal to 0 then
+        display "ambulisp -- too few arguments" crlf
+        exit
+      end-if
+
+      store apply.params in car.cell
+      call sub-procedure car
+      store car.car in apply.env.key
+
+      store apply.args in car.cell
+      call sub-procedure car
+      store car.car in apply.env.value
+
+      call sub-procedure apply.env.define
+
+      store apply.params in cdr.cell
+      call sub-procedure cdr
+      store cdr.cdr in apply.params
+
+      store apply.args in cdr.cell
+      call sub-procedure cdr
+      store cdr.cdr in apply.args
+    repeat
+    if apply.args is greater than 0 then
+      display "ambulisp -- too many arguments" crlf
+      exit
+    end-if
+  end sub-procedure
+
+  sub-procedure eval.primitive.cons
+    store apply.args in car.cell
+    call sub-procedure car
+    store car.car in cons.car
+
+    store apply.args in cdr.cell
+    call sub-procedure cdr
+    store cdr.cdr in car.cell
+    call sub-procedure car
+    store car.car in cons.cdr
+
+    call sub-procedure cons
+    store cons.cell in eval.result
+  end sub-procedure
+
+  sub-procedure eval.primitive.car
+    store apply.args in car.cell
+    call sub-procedure car
+    store car.car in car.cell
+    call sub-procedure car
+    store car.car in eval.result
+  end sub-procedure
+
+  sub-procedure eval.primitive.cdr
+    store apply.args in car.cell
+    call sub-procedure car
+    store car.car in cdr.cell
+    call sub-procedure cdr
+    store cdr.cdr in eval.result
+  end sub-procedure
+
+  sub-procedure eval.primitive.print
+    store apply.args in car.cell
+    call sub-procedure car
+    store car.car in writer.input
+    call sub-procedure writer.write
+  end sub-procedure
+
+  sub-procedure eval.primitive.println
+    store apply.args in car.cell
+    call sub-procedure car
+    store car.car in writer.input
+    call sub-procedure writer.writeln
+  end sub-procedure
+
+  sub-procedure eval.primitive.null
+    store apply.args in car.cell
+    call sub-procedure car
+    if car.car is equal to const.nil then
+      store symtable.t in eval.result
+    else
+      store const.nil in eval.result
+    end-if
+  end sub-procedure
+
+  sub-procedure eval.primitive.eq
+    store apply.args in car.cell
+    call sub-procedure car
+    store car.car in eval.tmp1
+
+    store apply.args in cdr.cell
+    call sub-procedure cdr
+    store cdr.cdr in car.cell
+    call sub-procedure car
+    store car.car in eval.tmp2
+
+    if eval.tmp1 is equal to eval.tmp2 then
+      store symtable.t in eval.result
+    else
+      store const.nil in eval.result
+    end-if
+  end sub-procedure
+
+  sub-procedure eval.eval-expression
+    if eval.stack:eval.stack.top is equal to const.nil then
+      return
+    end-if
+
+    if eval.stack:eval.stack.top is less than 0 then
+      # atom (variable)
+      store eval.stack:eval.stack.top in eval.env.key
+      call sub-procedure eval.env.lookup
+      store eval.env.value in eval.stack:eval.stack.top
+      return
+    end-if
+
+    store eval.stack:eval.stack.top in car.cell
+    call sub-procedure car
+
+    if car.car is equal to symtable.quote then
+      call sub-procedure eval.take-first-arg
+      return
+    end-if
+    if car.car is equal to symtable.begin then
+      call sub-procedure eval.take-cdr
+      call sub-procedure eval.push-nil
+      call sub-procedure eval.pop
+      while eval.stack:eval.stack.top is greater than 0 do
+        call sub-procedure eval.push-car
+        call sub-procedure eval.eval-expression
+        call sub-procedure eval.pop
+        call sub-procedure eval.take-cdr
+      repeat
+      call sub-procedure eval.shift-down
+      return
+    end-if
+    if car.car is equal to symtable.define then
+      call sub-procedure eval.push-second-arg
+      call sub-procedure eval.eval-expression
+      call sub-procedure eval.define
+      return
+    end-if
+    if car.car is equal to symtable.set then
+      call sub-procedure eval.push-second-arg
+      call sub-procedure eval.eval-expression
+      call sub-procedure eval.set
+      return
+    end-if
+    if car.car is equal to symtable.if then
+      call sub-procedure eval.take-cdr
+      while 0 is equal to 0 do
+        store eval.stack:eval.stack.top in cdr.cell
+        call sub-procedure cdr
+        if cdr.cdr is less than or equal to 0 then
+          # (else)
+          call sub-procedure eval.take-car
+          break
+        end-if
+        # (cond then ...)
+        call sub-procedure eval.push-car
+        call sub-procedure eval.eval-expression
+        if eval.stack:eval.stack.top is not equal to const.nil then
+          # true condition
+          call sub-procedure eval.pop
+          call sub-procedure eval.take-cdr
+          call sub-procedure eval.take-car
+          break
+        end-if
+        # false condition
+        call sub-procedure eval.pop
+        call sub-procedure eval.take-cdr
+        call sub-procedure eval.take-cdr
+      repeat
+      call sub-procedure eval.eval-expression
+      return
+    end-if
+    if car.car is equal to symtable.lambda then
+      call sub-procedure eval.make-closure
+      return
+    end-if
+
+    # APPLY
+
+    # evaluate args
+    call sub-procedure eval.push-nil
+    call sub-procedure eval.swap
+    while eval.stack:eval.stack.top is greater than 0 do
+      store eval.stack:eval.stack.top in car.cell
+      call sub-procedure car
+      add eval.stack.top and 1 in eval.stack.top
+      store car.car in eval.stack:eval.stack.top
+      call sub-procedure eval.eval-expression
+      call sub-procedure eval.swap-cons
+      store eval.stack:eval.stack.top in cdr.cell
+      call sub-procedure cdr
+      store cdr.cdr in eval.stack:eval.stack.top
+    repeat
+    call sub-procedure eval.pop
+    call sub-procedure eval.reverse
+
+    store eval.stack:eval.stack.top in car.cell
+    call sub-procedure car
+    store car.car in apply.function
+
+    store eval.stack:eval.stack.top in cdr.cell
+    call sub-procedure cdr
+    store cdr.cdr in apply.args
+
+    call sub-procedure eval.pop
+
+    if apply.function is less than or equal to 0 then
+      display "ambulisp -- cannot apply: "
+      store apply.function in writer.input
+      call sub-procedure writer.writeln
+      exit
+    end-if
+
+    store apply.function in car.cell
+    call sub-procedure car
+    if car.car is equal to symtable.closure then
+      call sub-procedure apply.unpack-closure
+      call sub-procedure apply.bind-parameters
+
+      store eval.env in eval.callstack:eval.callstack.top
+      add eval.callstack.top and 1 in eval.callstack.top
+      store apply.env in eval.env
+
+      add eval.stack.top and 1 in eval.stack.top
+      store apply.body in eval.stack:eval.stack.top
+      call sub-procedure eval.eval-expression
+
+      subtract 1 from eval.callstack.top in eval.callstack.top
+      store eval.callstack:eval.callstack.top in eval.env
+
+      return
+    end-if
+
+    # PRIMITIVE FUNCTIONS
+
+    store const.nil in eval.result 
+    if car.car is equal to symtable.cons then
+      call sub-procedure eval.primitive.cons
+      add eval.stack.top and 1 in eval.stack.top
+      store eval.result in eval.stack:eval.stack.top
+      return
+    end-if
+    if car.car is equal to symtable.car then
+      call sub-procedure eval.primitive.car
+      add eval.stack.top and 1 in eval.stack.top
+      store eval.result in eval.stack:eval.stack.top
+      return
+    end-if
+    if car.car is equal to symtable.cdr then
+      call sub-procedure eval.primitive.cdr
+      add eval.stack.top and 1 in eval.stack.top
+      store eval.result in eval.stack:eval.stack.top
+      return
+    end-if
+    if car.car is equal to symtable.null then
+      call sub-procedure eval.primitive.null
+      add eval.stack.top and 1 in eval.stack.top
+      store eval.result in eval.stack:eval.stack.top
+      return
+    end-if
+    if car.car is equal to symtable.eq then
+      call sub-procedure eval.primitive.eq
+      add eval.stack.top and 1 in eval.stack.top
+      store eval.result in eval.stack:eval.stack.top
+      return
+    end-if
+    if car.car is equal to symtable.print then
+      call sub-procedure eval.primitive.print
+      add eval.stack.top and 1 in eval.stack.top
+      store eval.result in eval.stack:eval.stack.top
+      return
+    end-if
+    if car.car is equal to symtable.println then
+      call sub-procedure eval.primitive.println
+      add eval.stack.top and 1 in eval.stack.top
+      store eval.result in eval.stack:eval.stack.top
+      return
+    end-if
+
+    display "ambulisp -- cannot apply: "
+    store apply.function in writer.input
+    call sub-procedure writer.writeln
+    exit
+  end sub-procedure
+
+  # eval.eval : eval.input -> eval.output
+  sub-procedure eval.eval
+    call sub-procedure eval.env.initialize
+    store 0 in eval.stack.top
+    store 0 in eval.callstack.top
+    store eval.input in eval.stack:eval.stack.top
+    call sub-procedure eval.eval-expression
+    store eval.stack:eval.stack.top in eval.output
+  end sub-procedure
+
+#### Main ####
+
+  sub-procedure main
+    call sub-procedure global.initialize
+    call sub-procedure symtable.initialize
+
+    accept reader.input until eof
+    join "(begin " and reader.input in reader.input
+    join reader.input and ")" in reader.input
+
+    call sub-procedure reader.read
+
+    store reader.cell in eval.input
+    call sub-procedure eval.eval
+
+    store eval.output in writer.input
+
+    # DEBUG
+    #call sub-procedure writer.writeln
+    #display "" crlf
+    #display "#### Environment ####" crlf
+    #store eval.env in writer.input
+    #call sub-procedure writer.writeln
+
+  end sub-procedure
+
+  call sub-procedure main
+

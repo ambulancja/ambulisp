@@ -1,0 +1,66 @@
+
+(define t (quote t))
+(define nil (quote ()))
+
+(define and
+  (lambda (x y)
+    (if x
+      y
+      nil)))
+
+(define or
+  (lambda (x y)
+    (if x
+      t
+      y)))
+
+(define not
+   (lambda (x)
+     (if x nil t)))
+
+(define add1bit
+  (lambda (x y z)
+    (if (eq x y)
+        z
+        (not z))))
+
+(define add1carry
+  (lambda (x y z)
+    (if x (if y t z)
+        y z
+        nil)))
+
+(define addcarry)
+(set addcarry
+  (lambda (a b c)
+    (if
+      (and (null a) (null b))
+        (if c (cons c nil) nil)
+      (null a)
+         (addcarry (cons nil nil) b c)
+      (null b)
+         (addcarry a (cons nil nil) c)
+      (cons (add1bit (car a) (car b) c)
+            (addcarry (cdr a) (cdr b)
+                      (add1carry (car a) (car b) c))))))
+
+(define add
+  (lambda (a b)
+    (addcarry a b nil)))
+
+(define 0 nil)
+(define 1 (cons t nil))
+(define 2 (add 1 1))
+(define 3 (add 2 1))
+(define 4 (add 2 2))
+(define 5 (add 4 1))
+(define 6 (add 4 2))
+(define 7 (add 4 3))
+(define 8 (add 4 4))
+
+(define main
+  (lambda ()
+    8))
+
+(println (main))
+

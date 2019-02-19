@@ -1,0 +1,22 @@
+
+(define makecounter
+  (lambda ()
+    ((lambda (c)
+       (lambda ()
+         (set c (cons (quote suc) c))
+         c))
+     (quote zero))))
+
+(define counter1 (makecounter))
+(define counter2 (makecounter))
+
+(println (counter1))
+(println (counter1))
+(println (counter1))
+(println (counter1))
+
+(println (counter2))
+(println (counter2))
+(println (counter2))
+(println (counter2))
+
