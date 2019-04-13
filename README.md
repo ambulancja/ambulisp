@@ -46,3 +46,5 @@ LISP Interpreter written in [LDPL](https://github.com/Lartu/ldpl).
 
 - How to run the example: `$ ./ambulisp < map.ambulisp`
 - The example outputs `((a . a) (b . b) (c . c))`.
+
+More examples can be found in the repository.
