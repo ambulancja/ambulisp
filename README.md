@@ -1,13 +1,15 @@
-Implementacion de LISP hecha en [LDPL](https://github.com/Lartu/ldpl).
+## Ambulisp 🚑
 
-**Comandos**
+LISP Interpreter written in [LDPL](https://github.com/Lartu/ldpl).
 
-- `(quote x)` devuelve x sin ejecutarlo
-- `(begin x1 ... xn)` ejecuta x1, x2, ..., xn y devuelve el resultado de xn
-- `(define x y)` define la variable x con el valor de y (agranda el scope)
-- `(set x y)` asigna la variable x al valor de y (no agranda el scope, la variable x ya tiene que estar definida)
-- `(if c1 x1 c2 x2 ... cn xn [y])` si la condición c1 es verdadera devuelve el resultado de x1, si no sigue evaluando hasta que alguna de las condiciones c1, c2, ..., cn sea verdadera. si ninguna es verdadera devuelve y. el else "y" es popcional
-- `(lambda (x1 ... xn) y1 ... ym)` crea una lambda con n parametros que cuando se la llama ejecuta los comandos y1, ..., ym
+### Commands
+
+- `(quote x)` returns `x` without executing it.
+- `(begin x1 ... xn)` executes `x1`, `x2`, ..., `xn` and returns the result of `xn`.
+- `(define x y)` defines the variable `x` with the value of `y` enlarging the scope.
+- `(set x y)` sets the value of `x` to the value of `y` without enlarging the scope, the variable `x` already has to be defined. 
+- `(if c1 x1 c2 x2 ... cn xn [y])` if the condition `c1` is true, returns the result of `x1`. If it is not, it keeps evaluating until any of the conditions `c1`, `c2`, ..., `cn` are true. If none of these return true, it returns `y`. The `[y]` part is optional.
+- `(lambda (x1 ... xn) y1 ... ym)` creates a lambda with n parameters that when called executes the commands `y1`, ..., `yn`.
 - `(f x1 ... xn)` llama a la funcion f con los parametros x1, ..., xn.
 - `()` es la lista vacia
 - `(cons x y)` crea un cons `(x . y)`
