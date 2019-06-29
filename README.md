@@ -1,26 +1,28 @@
-Implementacion de LISP hecha en [LDPL](https://github.com/Lartu/ldpl).
+# Ambulisp 🚑
 
-**Comandos**
+LISP Interpreter written in [LDPL](https://github.com/Lartu/ldpl).
 
-- `(quote x)` devuelve x sin ejecutarlo
-- `(begin x1 ... xn)` ejecuta x1, x2, ..., xn y devuelve el resultado de xn
-- `(define x y)` define la variable x con el valor de y (agranda el scope)
-- `(set x y)` asigna la variable x al valor de y (no agranda el scope, la variable x ya tiene que estar definida)
-- `(if c1 x1 c2 x2 ... cn xn [y])` si la condición c1 es verdadera devuelve el resultado de x1, si no sigue evaluando hasta que alguna de las condiciones c1, c2, ..., cn sea verdadera. si ninguna es verdadera devuelve y. el else "y" es popcional
-- `(lambda (x1 ... xn) y1 ... ym)` crea una lambda con n parametros que cuando se la llama ejecuta los comandos y1, ..., ym
-- `(f x1 ... xn)` llama a la funcion f con los parametros x1, ..., xn.
-- `()` es la lista vacia
-- `(cons x y)` crea un cons `(x . y)`
-- `(car x)` devuelve el car del cons
-- `(cdr x)` devuelve el cdr del cons
-- `(null x)` si es la lista vacía devuelve t sino devuelve ()
-- `(eq x y)` si son iguales devuelve t sino devuelve ()
-- `(print x)` muestra x.
-- `(println x)` muestra x seguido de un enter
+## Commands
 
-**Ejemplo**
+- `(quote x)` returns `x` without executing it.
+- `(begin x1 ... xn)` executes `x1`, `x2`, ..., `xn` and returns the result of `xn`.
+- `(define x y)` defines the variable `x` with the value of `y` enlarging the scope.
+- `(set x y)` sets the value of `x` to the value of `y` without enlarging the scope, the variable `x` already has to be defined. 
+- `(if c1 x1 c2 x2 ... cn xn [y])` if the condition `c1` is true, returns the result of `x1`. If it is not, it keeps evaluating until any of the conditions `c1`, `c2`, ..., `cn` are true. If none of these return true, it returns `y`. The `[y]` part is optional.
+- `(lambda (x1 ... xn) y1 ... ym)` creates a lambda with n parameters that when called executes the commands `y1`, ..., `yn`.
+- `(f x1 ... xn)` calls the function `f` with the parameters `x1`, ..., `xn`.
+- `()` is the empty list.
+- `(cons x y)` creates a cons `(x . y)`
+- `(car x)` returns the car of the cons.
+- `(cdr x)` returns the cdr of the cons.
+- `(null x)` if the list is empty returns `t`, else returns `()`.
+- `(eq x y)` if `x` is equal to `y` returns `t`, else returns `()`.
+- `(print x)` displays `x`.
+- `(println x)` displays `x` followed by a line break.
 
-## map.ambulisp ##
+## Example
+
+### map.ambulisp
 
 ```
 (define nil (quote ()))
@@ -42,5 +44,7 @@ Implementacion de LISP hecha en [LDPL](https://github.com/Lartu/ldpl).
                  nil)))))
 ```
 
-- ldpl ambulisp.ldpl<map.ambulisp
-- ((a . a) (b . b) (c . c))
+- How to run the example: `$ ./ambulisp < map.ambulisp`
+- The example outputs `((a . a) (b . b) (c . c))`.
+
+More examples can be found in the repository.
