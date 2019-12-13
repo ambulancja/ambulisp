@@ -103,9 +103,9 @@ procedure:
 
 #### Constants ####
 
-  store character 10 in const.LF
-  store character 13 in const.CR
-  store character  9 in const.TAB
+  get ascii character 10 in const.LF
+  get ascii character 13 in const.CR
+  get ascii character  9 in const.TAB
   store   65         in const.upperA
   store   90         in const.upperZ
   store   97         in const.lowerA
@@ -128,7 +128,7 @@ procedure:
   # cons : cons.car, cons.cdr -> cons.cell
   sub-procedure cons
     store global.nextcell in cons.cell
-    add global.nextcell and 1 in global.nextcell
+    in global.nextcell solve 1 + global.nextcell
     store cons.car in global.cars:cons.cell
     store cons.cdr in global.cdrs:cons.cell
   end sub-procedure
@@ -160,10 +160,10 @@ procedure:
       if global.atoms:intern.cell is equal to intern.text then
         return
       end-if
-      subtract 1 from intern.cell in intern.cell
+      in intern.cell solve intern.cell - 1
     repeat
     store intern.text in global.atoms:intern.cell
-    subtract 1 from global.nextatom in global.nextatom
+    in global.nextatom solve global.nextatom - 1
   end sub-procedure
 
   sub-procedure is-alnum.is-upper
@@ -195,7 +195,7 @@ procedure:
   # is-alnum : is-alnum.chr -> is-alnum.result
   sub-procedure is-alnum
     store 0 in is-alnum.result
-    store character code of is-alnum.chr in is-alnum.ord
+    get character code of is-alnum.chr in is-alnum.ord
     call sub-procedure is-alnum.is-upper
     call sub-procedure is-alnum.is-lower
     call sub-procedure is-alnum.is-digit
@@ -204,7 +204,7 @@ procedure:
 #### Reader ####
 
   sub-procedure reader.initialize
-    store length of reader.input in reader.n
+    get length of reader.input in reader.n
     store 0 in reader.i
     store 0 in reader.stack.size
   end sub-procedure
@@ -213,19 +213,19 @@ procedure:
     while reader.i is less than reader.n do
       get character at reader.i from reader.input in reader.c
       if reader.c is equal to " " then
-        add reader.i and 1 in reader.i
+	in reader.i solve reader.i + 1
         continue
       end-if
       if reader.c is equal to const.TAB then
-        add reader.i and 1 in reader.i
+	in reader.i solve reader.i + 1
         continue
       end-if
       if reader.c is equal to const.CR then
-        add reader.i and 1 in reader.i
+	in reader.i solve reader.i + 1
         continue
       end-if
       if reader.c is equal to const.LF then
-        add reader.i and 1 in reader.i
+	in reader.i solve reader.i + 1
         continue
       end-if
       break
@@ -247,12 +247,12 @@ procedure:
 
   sub-procedure reader.push-cell
     store reader.cell in reader.stack:reader.stack.size
-    add reader.stack.size and 1 in reader.stack.size
+    in reader.stack.size solve reader.stack.size + 1 
   end sub-procedure
 
   sub-procedure reader.push-terminator
     store const.terminator in reader.stack:reader.stack.size
-    add reader.stack.size and 1 in reader.stack.size
+    in reader.stack.size solve reader.stack.size + 1 
   end sub-procedure
 
   sub-procedure reader.read-atom
@@ -265,7 +265,7 @@ procedure:
         break
       end-if
       join reader.buf and reader.c in reader.buf
-      add reader.i and 1 in reader.i
+      in reader.i solve reader.i + 1 
     repeat
 
     store reader.buf in intern.text
@@ -276,13 +276,13 @@ procedure:
 
   sub-procedure reader.build-list
     store const.nil in reader.cell
-    subtract 1 from reader.stack.size in reader.stack.size
+    in reader.stack.size solve reader.stack.size - 1 
     while reader.stack:reader.stack.size is not equal to const.terminator do
       store reader.stack:reader.stack.size in cons.car
       store reader.cell in cons.cdr
       call sub-procedure cons
       store cons.cell in reader.cell
-      subtract 1 from reader.stack.size in reader.stack.size
+      in reader.stack.size solve reader.stack.size - 1 
     repeat
     call sub-procedure reader.push-cell
   end sub-procedure
@@ -290,14 +290,14 @@ procedure:
   sub-procedure reader.read-expression
     call sub-procedure reader.seek
     if reader.c is equal to "(" then
-      add reader.i and 1 in reader.i
+      in reader.i solve reader.i + 1 
       call sub-procedure reader.push-terminator
       call sub-procedure reader.seek
       while reader.c is not equal to ")" do
         call sub-procedure reader.read-expression
         call sub-procedure reader.seek
       repeat
-      add reader.i and 1 in reader.i
+      in reader.i solve reader.i + 1 
       call sub-procedure reader.build-list
     else
       call sub-procedure reader.read-atom
@@ -334,10 +334,10 @@ procedure:
         # head
         store writer.stack:writer.stack.top in car.cell
         call sub-procedure car
-        add writer.stack.top and 1 in writer.stack.top
+	in writer.stack.top solve writer.stack.top + 1 
         store car.car in writer.stack:writer.stack.top
         call sub-procedure writer.write-expression
-        subtract 1 from writer.stack.top in writer.stack.top
+	in writer.stack.top solve writer.stack.top - 1 
         # tail
         store writer.stack:writer.stack.top in cdr.cell
         call sub-procedure cdr
@@ -456,7 +456,7 @@ procedure:
   sub-procedure eval.push-car
     store eval.stack:eval.stack.top in car.cell
     call sub-procedure car
-    add eval.stack.top and 1 in eval.stack.top 
+    in eval.stack.top  solve eval.stack.top + 1 
     store car.car in eval.stack:eval.stack.top
   end sub-procedure
 
@@ -473,7 +473,7 @@ procedure:
     call sub-procedure cdr
     store cdr.cdr in car.cell
     call sub-procedure car
-    add eval.stack.top and 1 in eval.stack.top 
+    in eval.stack.top  solve eval.stack.top + 1 
     store car.car in eval.stack:eval.stack.top
   end sub-procedure
 
@@ -484,22 +484,22 @@ procedure:
     call sub-procedure cdr
     store cdr.cdr in car.cell
     call sub-procedure car
-    add eval.stack.top and 1 in eval.stack.top 
+    in eval.stack.top  solve eval.stack.top + 1 
     store car.car in eval.stack:eval.stack.top
   end sub-procedure
 
   sub-procedure eval.shift-down
-    add eval.stack.top and 1 in eval.tmp
+    in eval.tmp solve eval.stack.top + 1 
     store eval.stack:eval.tmp in eval.stack:eval.stack.top 
   end sub-procedure
 
   sub-procedure eval.push-nil
-    add eval.stack.top and 1 in eval.stack.top 
+    in eval.stack.top  solve eval.stack.top + 1 
     store const.nil in eval.stack:eval.stack.top
   end sub-procedure
 
   sub-procedure eval.pop
-    subtract 1 from eval.stack.top in eval.stack.top 
+    in eval.stack.top  solve eval.stack.top - 1 
   end sub-procedure
 
   # eval.env.define : eval.env.key , eval.env.value ->
@@ -654,23 +654,23 @@ procedure:
   # a b --> b a
   sub-procedure eval.swap
     store eval.stack:eval.stack.top in eval.tmp1
-    subtract 1 from eval.stack.top in eval.stack.top
+    in eval.stack.top solve eval.stack.top - 1 
     store eval.stack:eval.stack.top in eval.tmp2
     store eval.tmp1 in eval.stack:eval.stack.top
-    add eval.stack.top and 1 in eval.stack.top
+    in eval.stack.top solve eval.stack.top + 1 
     store eval.tmp2 in eval.stack:eval.stack.top
   end sub-procedure
 
   # a b c --> (c . a) b
   sub-procedure eval.swap-cons
     store eval.stack:eval.stack.top in cons.car
-    subtract 1 from eval.stack.top in eval.stack.top
+    in eval.stack.top solve eval.stack.top - 1 
     store eval.stack:eval.stack.top in eval.tmp
-    subtract 1 from eval.stack.top in eval.stack.top
+    in eval.stack.top solve eval.stack.top - 1 
     store eval.stack:eval.stack.top in cons.cdr
     call sub-procedure cons
     store cons.cell in eval.stack:eval.stack.top
-    add eval.stack.top and 1 in eval.stack.top
+    in eval.stack.top solve eval.stack.top + 1 
     store eval.tmp in eval.stack:eval.stack.top
   end sub-procedure
 
@@ -915,7 +915,7 @@ procedure:
     while eval.stack:eval.stack.top is greater than 0 do
       store eval.stack:eval.stack.top in car.cell
       call sub-procedure car
-      add eval.stack.top and 1 in eval.stack.top
+      in eval.stack.top solve eval.stack.top + 1 
       store car.car in eval.stack:eval.stack.top
       call sub-procedure eval.eval-expression
       call sub-procedure eval.swap-cons
@@ -950,14 +950,14 @@ procedure:
       call sub-procedure apply.bind-parameters
 
       store eval.env in eval.callstack:eval.callstack.top
-      add eval.callstack.top and 1 in eval.callstack.top
+      in eval.callstack.top solve eval.callstack.top + 1 
       store apply.env in eval.env
 
-      add eval.stack.top and 1 in eval.stack.top
+      in eval.stack.top solve eval.stack.top + 1 
       store apply.body in eval.stack:eval.stack.top
       call sub-procedure eval.eval-expression
 
-      subtract 1 from eval.callstack.top in eval.callstack.top
+      in eval.callstack.top solve eval.callstack.top - 1 
       store eval.callstack:eval.callstack.top in eval.env
 
       return
@@ -968,43 +968,43 @@ procedure:
     store const.nil in eval.result 
     if car.car is equal to symtable.cons then
       call sub-procedure eval.primitive.cons
-      add eval.stack.top and 1 in eval.stack.top
+      in eval.stack.top solve eval.stack.top + 1 
       store eval.result in eval.stack:eval.stack.top
       return
     end-if
     if car.car is equal to symtable.car then
       call sub-procedure eval.primitive.car
-      add eval.stack.top and 1 in eval.stack.top
+      in eval.stack.top solve eval.stack.top + 1 
       store eval.result in eval.stack:eval.stack.top
       return
     end-if
     if car.car is equal to symtable.cdr then
       call sub-procedure eval.primitive.cdr
-      add eval.stack.top and 1 in eval.stack.top
+      in eval.stack.top solve eval.stack.top + 1 
       store eval.result in eval.stack:eval.stack.top
       return
     end-if
     if car.car is equal to symtable.null then
       call sub-procedure eval.primitive.null
-      add eval.stack.top and 1 in eval.stack.top
+      in eval.stack.top solve eval.stack.top + 1 
       store eval.result in eval.stack:eval.stack.top
       return
     end-if
     if car.car is equal to symtable.eq then
       call sub-procedure eval.primitive.eq
-      add eval.stack.top and 1 in eval.stack.top
+      in eval.stack.top solve eval.stack.top + 1 
       store eval.result in eval.stack:eval.stack.top
       return
     end-if
     if car.car is equal to symtable.print then
       call sub-procedure eval.primitive.print
-      add eval.stack.top and 1 in eval.stack.top
+      in eval.stack.top solve eval.stack.top + 1 
       store eval.result in eval.stack:eval.stack.top
       return
     end-if
     if car.car is equal to symtable.println then
       call sub-procedure eval.primitive.println
-      add eval.stack.top and 1 in eval.stack.top
+      in eval.stack.top solve eval.stack.top + 1 
       store eval.result in eval.stack:eval.stack.top
       return
     end-if
